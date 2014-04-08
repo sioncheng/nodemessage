@@ -1,15 +1,16 @@
 var fork = require('child_process').fork;
+var path = require('path');
+
 var workers = require('os').cpus().length;
 var server = require('net').createServer();
 var dir = (function(){
   var filename = process.mainModule.filename;
-  return filename.substring(0,filename.lastIndexOf('/'));
+  return path.dirname(filename);
 })();
 
 var child_processes = new Array();
-
 for(var i = 0 ; i < workers; ++i){
-  child_processes.push(fork(dir + '/server_balance_worker.js'));
+  child_processes.push(fork(path.join(dir,'server_balance_worker.js')));
   console.log('forked ',child_processes[i].pid);
 }
 
