@@ -14,22 +14,30 @@ PackageBuffer.prototype.add = function(data){
 	data.copy(this._buffer, this._pos);
 	this._pos += data.length;
 
-	if (this._bodyLength === 0) {
-		if (this._pos > this._headLength) {
+	if (this._bodyLength === 0 && this._pos > this._headLength) {
 			this._bodyLength = this._buffer.readInt32LE(0);
-		}
 	}
 
-	if (this._bodyLength > 0 && this._pos >= this._bodyLength + this._headLength) {
-		this._emitter.emit('package',this._buffer.slice(4, this._bodyLength + 4));
+	while(true){
+		if (this._bodyLength > 0 && this._pos >= this._bodyLength + this._headLength) {
 
-		this._buffer.copy(this._buffer
-			, 0
-			, this._headLength + this._bodyLength
-			, this._pos
-			);
-		this._pos = this._pos - this._headLength - this._bodyLength;
-		this._bodyLength = 0;
+			this._emitter.emit('package',this._buffer.slice(4, this._bodyLength + this._headLength));
+
+			this._buffer.copy(this._buffer
+				, 0
+				, this._headLength + this._bodyLength
+				, this._pos
+				);
+			this._pos = this._pos - this._headLength - this._bodyLength;
+			this._bodyLength = 0;
+
+			if (this._bodyLength === 0 && this._pos > this._headLength) {
+				this._bodyLength = this._buffer.readInt32LE(0);
+			}
+		}
+		else{
+			break;
+		}
 	}
 	
 }

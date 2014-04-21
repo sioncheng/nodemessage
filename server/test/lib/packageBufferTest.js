@@ -19,11 +19,12 @@ describe('packageBuffer', function(){
 		});
 
 		var msgBuffer = new Buffer(msg);
-		var bf = new Buffer(4 + msgBuffer.length);
+		var bf = new Buffer(4 + msgBuffer.length + 4 + msgBuffer.length);
 		bf.writeInt32LE(msgBuffer.length, 0);
 		msgBuffer.copy(bf, 4);
-
+		bf.writeInt32LE(msgBuffer.length, 4 + msgBuffer.length);
+		msgBuffer.copy(bf,4 + msgBuffer.length + 4)
 		pb.add(bf);
-		pb.add(bf);
+		//pb.add(bf);
 	});
 });

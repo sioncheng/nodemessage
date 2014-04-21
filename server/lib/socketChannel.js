@@ -1,35 +1,36 @@
 var net = require('net');
-var buffer = require('buffer');
 var events = require('events');
+var PackageBuffer = require('./packageBuffer.js');
 
-var SocketChannel = function(socket,messageParser){
+var SocketChannel = function(socket){
 	this.socket = socket;
-	events.EventEmmiter.call(this);
+	this.eventEmmiter = new events.EventEmitter();
+	this.buffer = new PackageBuffer(1024);
 
-	//buffers
-	this.data = new Buffer();
-	this.dataPos = 0;
+	var that = this;
+	this.buffer.on('package',function(pkg){
+		that.eventEmmiter.emit('package',pkg);
+	});
 
+	var that = this;
 	this.socket.on('data',function(data){
-		data.copy(this.data,this.dataPos);
-		this.dataPos += data.length;
-
-		this._checkPackage();
+		that.buffer.add(data);
 	});
 }
 
 SocketChannel.prototype.on = function(event,handler){
-	this.eventEmmiter.addEventListener(event,handler);
+	this.eventEmmiter.on(event,handler);
 }
 
-SocketChannel.prototype._checkPackage = function(){
-	if(this.dataPos > 4){
-		
+
+SocketChannel.prototype.send = function(message){
+
+}
+
+SocketChannel.prototype.close = function(){
+	if(this.socket){
+		this.socket.end();
 	}
 }
 
-SocketChannel.prototype.send = function(message){
-	
-}
-
-module.exports.SocketChannel = SocketChannel;
+module.exports = SocketChannel;
