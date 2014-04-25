@@ -15,6 +15,9 @@ describe('#SocketChannel',function(){
 						socketChannels[i].close();
 					}
 					done();
+					server.close(function(){
+						console.log('server has been closed');
+					});
 				}
 			});
 			socketChannels.push(sc);

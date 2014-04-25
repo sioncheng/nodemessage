@@ -2,41 +2,41 @@
 var events = require('events');
 
 function PackageBuffer(size){
-	this._emitter = new events.EventEmitter();
-	this._size = size;
-	this._headLength = 4;
-	this._buffer = new Buffer(this._size);
-	this._pos = 0;
-	this._bodyLength = 0;
+	this.emitter = new events.EventEmitter();
+	this.size = size;
+	this.headLength = 4;
+	this.buffer = new Buffer(this.size);
+	this.pos = 0;
+	this.bodyLength = 0;
 }
 
 PackageBuffer.prototype.add = function(data){
-	data.copy(this._buffer, this._pos);
-	this._pos += data.length;
+	data.copy(this.buffer, this.pos);
+	this.pos += data.length;
 
 	while(true){
-		if (this._bodyLength === 0 && this._pos > this._headLength) {
-			this._bodyLength = this._buffer.readInt32LE(0);
+		if (this.bodyLength === 0 && this.pos > this.headLength) {
+			this.bodyLength = this.buffer.readInt32LE(0);
 		}
 		else{
 			break;
 		}
 
-		if (this._bodyLength > 0
-			&& this._pos >= this._bodyLength + this._headLength) {
+		if (this.bodyLength > 0
+			&& this.pos >= this.bodyLength + this.headLength) {
 
-			this._emitter.emit('package'
-				,this._buffer.slice(4, this._bodyLength + this._headLength)
+			this.emitter.emit('package'
+				,this.buffer.slice(4, this.bodyLength + this.headLength)
 			);
 
-			this._buffer.copy(this._buffer
+			this.buffer.copy(this.buffer
 				, 0
-				, this._headLength + this._bodyLength
-				, this._pos
+				, this.headLength + this.bodyLength
+				, this.pos
 			);
 
-			this._pos = this._pos - this._headLength - this._bodyLength;
-			this._bodyLength = 0;
+			this.pos = this.pos - this.headLength - this.bodyLength;
+			this.bodyLength = 0;
 		}
 		else{
 			break;
@@ -46,7 +46,7 @@ PackageBuffer.prototype.add = function(data){
 }
 
 PackageBuffer.prototype.on = function(event, listener){
-	this._emitter.on(event, listener);
+	this.emitter.on(event, listener);
 }
 
 PackageBuffer.packageData = function(data){
