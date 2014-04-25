@@ -30,7 +30,13 @@ describe('#SocketChannel',function(){
 		msg2.copy(buf, 4 + msg1.length + 4);
 		var conn1 = new net.Socket();
 		conn1.connect(8001,"127.0.0.1",function(){
-			conn1.write(buf);
+			conn1.write(buf,'utf-8',function(){
+				//console.log(arguments);
+			});
 		}).on('close',function(){}).on('error',function(){});
+	});
+
+	if('should send 2 packages',function(done){
+		done();
 	});
 });
