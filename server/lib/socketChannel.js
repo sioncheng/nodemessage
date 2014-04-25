@@ -23,10 +23,7 @@ var SocketChannel = function(socket){
 	this.socket = socket;
 	this.eventEmmiter = new events.EventEmitter();
 	this.buffer = new PackageBuffer(1024);
-	this.writeDataQueue = new Array();
 	this.socketStatus = new SocketChannelStatus();
-	this.currentSendingData = null;
-
 
 	var that = this;
 	this.buffer.on('package',function(pkg){
@@ -44,26 +41,24 @@ SocketChannel.prototype.on = function(event,handler){
 }
 
 
-SocketChannel.prototype.send = function(data){
+SocketChannel.prototype.send = function(msg){
 	var that = this;
-	var sendData = function(){
+	var sendData = function(pkg){
 		that.socketStatus.setSending();
-		that.socket.write(that.currentSendingData,'utf-8',function(){
+		that.socket.write(pkg,'utf-8',function(){
 			that.socketStatus.setSent();
-			that.eventEmmiter.emit('sent',that.currentSendingData);
-			that.currentSendingData = that.writeDataQueue.pop();
-			if(that.currentSendingData){
-				sendData();
-			}
+			that.eventEmmiter.emit('sent',msg);
+			that.socketStatus.setSent();
 		});
 	}
 
 	if(this.socketStatus.isSendable()){
-		this.currentSendingData = data;
-		sendData();
+		sendData(PackageBuffer.packageData(msg['data']));
 	}
 	else{
-		this.dataQueue.push(data);
+		this.eventEmitter.emit("error"
+			,{"msg":"the socket channel is not ready for send","identifer":identifier}
+		);
 	}
 }
 

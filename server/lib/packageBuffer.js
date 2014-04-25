@@ -34,7 +34,7 @@ PackageBuffer.prototype.add = function(data){
 				, this._headLength + this._bodyLength
 				, this._pos
 			);
-			
+
 			this._pos = this._pos - this._headLength - this._bodyLength;
 			this._bodyLength = 0;
 		}
@@ -47,6 +47,13 @@ PackageBuffer.prototype.add = function(data){
 
 PackageBuffer.prototype.on = function(event, listener){
 	this._emitter.on(event, listener);
+}
+
+PackageBuffer.packageData = function(data){
+	var buffer = new Buffer(4 + data.length);
+	buffer.writeInt32LE(data.length,0);
+	data.copy(buffer,4,data.length);
+	return buffer;
 }
 
 module.exports = PackageBuffer;
