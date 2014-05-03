@@ -4,7 +4,7 @@ var childProcess = require('child_process');
 var path = require('path');
 
 var childProcessArr = new Array();
-for(var i = 0 ; i < os.cpus().length; ++i){
+for(var i = 0 ; i < os.cpus().length - 1; ++i){
 	childProcessArr.push(childProcess.fork(path.jion(__dirname,'worker.js')));
 }
 
