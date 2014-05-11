@@ -62,9 +62,9 @@ SocketChannel.prototype.send = function(msg){
 	}
 }
 
-SocketChannel.prototype.close = function(){
+SocketChannel.prototype.close = function(msg){
 	if(this.socket){
-		this.socket.end();
+		this.socket.end(msg);
 	}
 }
 
