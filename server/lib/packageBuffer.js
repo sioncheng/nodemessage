@@ -3,6 +3,9 @@ var events = require('events');
 
 function PackageBuffer(size){
 	this.emitter = new events.EventEmitter();
+	if(!size){
+		size = 512;
+	}
 	this.size = size;
 	this.headLength = 4;
 	this.buffer = new Buffer(this.size);

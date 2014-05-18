@@ -22,14 +22,14 @@ ServerStatus.prototype.isStarted = function(){
   return this.status === 'started';
 };
 
-var Server = function(maxConnections,ip,port){
+var clientsNumber = 0 ;
+var clients = new Array();
+var Server = function(maxConnections,host,port){
   this.maxConnections = maxConnections ;
-  this.ip = ip ;
+  this.host = host ;
   this.port = port ;
-  this.path = this.ip + ':' + this.port;
+  this.path = this.host + ':' + this.port;
   this.status = new ServerStatus() ;
-  this.server = null;
-  this.clients = null;
   this.eventEmitter = new events.EventEmitter();
 };
 
@@ -39,41 +39,51 @@ Server.prototype.start = function(){
   }
 
   console.log('begin to start');
-
-  this.clients = new Array();
-
   var that = this;
-
-
   this.server = net.createServer(function(){
 
   });
 
   this.server.on('connection',function(socket){
     var sc = new SocketChannel(socket);
-    that.clients.push(sc);
-    that.eventEmitter.emit('connection',{'sc':sc,'num':that.clients.length})
+    sc.on('package',function(pkg){
+      that.eventEmitter.emit('package', {'pkg':pkg,'remoteAddress':sc.remoteIPEndPoint});
+    });
+    sc.on('close',function(){
+      that.eventEmitter.emit('close', {'remoteAddress':sc.remoteIPEndPoint});
+      for(var i = 0 ; i < clients.length; ++i){
+        if(clients[i] === sc){
+          clients.removeAt(i);
+          break;
+        }
+      }
+    });
+    clients.push(sc);
+    clientsNumber += 1;
+    that.eventEmitter.emit('connection',{'remoteAddress':sc.remoteIPEndPoint})
   });
 
   this.server.on('close',function(){
       console.log('server stopped at' , that.path);
   });
 
-  this.server.listen(this.port,this.ip, 100, function(){
+  this.server.listen(this.port,this.host, 100, function(){
     console.log('server started at' , that.path);
   });
 };
 
 Server.prototype.stop = function(){
   console.log('begin to stop');
-  while(this.clients.length > 0){
-    (this.clients.pop()).close('server is stopping\n');
+  while(clients.length > 0){
+    var sc = clients.pop();
+    sc.close('server is stopping\n');
+    clientsNumber -= 1;
   }
   this.server.close();
 };
 
 Server.prototype.getClientsNumber = function(){
-  return this.clients.length;
+  return clientsNumber;
 }
 
 Server.prototype.on = function(event,handle){

@@ -19,25 +19,36 @@ SocketChannelStatus.prototype.isSendable = function(){
 }
 
 
-var SocketChannel = function(socket){
+var SocketChannel = function(socket,bufferSize){
 	this.socket = socket;
-	this.eventEmmiter = new events.EventEmitter();
-	this.buffer = new PackageBuffer(1024);
+	this.remoteAddress = socket.remoteAddress;
+	this.remotePort = socket.remotePort;
+	this.remoteIPEndPoint = this.remoteAddress + ':' + this.remotePort;
+	this.eventEmitter = new events.EventEmitter();
 	this.socketStatus = new SocketChannelStatus();
 
+	if(!bufferSize){
+		bufferSize = 1024;
+	}
+	var buffer = new PackageBuffer(bufferSize);
+	var dataTimes = 0 ;
 	var that = this;
-	this.buffer.on('package',function(pkg){
-		that.eventEmmiter.emit('package',pkg);
+	buffer.on('package',function(pkg){
+		that.eventEmitter.emit('package',pkg);
+		dataTimes = 0;
 	});
 
-	var that = this;
 	this.socket.on('data',function(data){
-		that.buffer.add(data);
+		buffer.add(data);
+		dataTimes += 1;
+		if(dataTimes >= 4){
+			that.close();
+		}
 	});
 }
 
 SocketChannel.prototype.on = function(event,handler){
-	this.eventEmmiter.on(event,handler);
+	this.eventEmitter.on(event,handler);
 }
 
 
@@ -47,8 +58,7 @@ SocketChannel.prototype.send = function(msg){
 		that.socketStatus.setSending();
 		that.socket.write(pkg,'utf-8',function(){
 			that.socketStatus.setSent();
-			that.eventEmmiter.emit('sent',msg);
-			that.socketStatus.setSent();
+			that.eventEmitter.emit('sent',msg);
 		});
 	}
 
@@ -65,6 +75,8 @@ SocketChannel.prototype.send = function(msg){
 SocketChannel.prototype.close = function(msg){
 	if(this.socket){
 		this.socket.end(msg);
+		this.socket = null;
+		this.eventEmitter.emit('close',{'this':this})
 	}
 }
 
